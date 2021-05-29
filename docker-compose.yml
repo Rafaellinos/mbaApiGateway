@@ -1,0 +1,51 @@
+version: '3'
+
+volumes: 
+  dados:
+
+networks:
+  apicrudnetwork:
+
+services:
+
+  db:
+    container_name: postgres-db
+    image: postgres:12-alpine
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_DB: apicrud
+      POSTGRES_PASSWORD: 123
+    networks: 
+      - apicrudnetwork
+    volumes: 
+      - dados:/var/lib/postgresql/data
+
+  auth:
+    container_name: auth-server
+    build:
+      context: ./AuthorizationServer
+    ports:
+      - 9092:9092
+    environment: 
+      POSTGRES_HOST: db
+    depends_on:
+      - db
+    networks: 
+      - apicrudnetwork
+
+  cliente:
+    container_name: cliente-server
+    build:
+      context: ./ApiCrud
+    ports: 
+      - 8081:8081
+    environment: 
+      POSTGRES_HOST: db
+      AUTH_SERVER: auth
+    depends_on:
+      - db
+      - auth
+    networks: 
+      - apicrudnetwork
